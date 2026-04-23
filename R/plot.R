@@ -124,11 +124,12 @@ ggplot.default <-
   }
 
   data <- fortify(data, ...)
+  mapping <- compact_mapping(mapping, data)
 
   p <- class_ggplot(
     data = data,
     mapping = mapping,
-    plot_env = environment
+    plot_env = compact_plot_env(environment)
   )
   class(p) <- union(union(c("ggplot2::ggplot", "ggplot"), class(p)), "gg")
 

@@ -189,7 +189,8 @@ S7::method(update_ggplot, list(class_guides, class_ggplot)) <-
 
 S7::method(update_ggplot, list(class_mapping, class_ggplot)) <-
   function(object, plot, ...) {
-    S7::set_props(plot, mapping = class_mapping(defaults(object, plot@mapping)))
+    mapping <- class_mapping(defaults(object, plot@mapping))
+    S7::set_props(plot, mapping = compact_mapping(mapping, plot@data))
   }
 
 S7::method(update_ggplot, list(class_theme, class_ggplot)) <-
@@ -219,6 +220,12 @@ S7::method(update_ggplot, list(class_facet, class_ggplot)) <-
 
 S7::method(update_ggplot, list(class_layer, class_ggplot)) <-
   function(object, plot, ...) {
+    layer_data <- if (is.null(object$data) || is_waiver(object$data)) {
+      if (isTRUE(object$inherit.aes)) plot@data else NULL
+    } else {
+      object$data
+    }
+    object$mapping <- compact_mapping(object$mapping, layer_data)
     layers_names <- new_layer_names(object, names2(plot@layers))
     object <- setNames(append(plot@layers, object), layers_names)
     S7::set_props(plot, layers = object)

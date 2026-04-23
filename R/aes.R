@@ -232,6 +232,29 @@ aes_to_scale <- function(var) {
   var
 }
 
+compact_mapping <- function(mapping, data = NULL) {
+  cols <- names(data)
+  if (length(cols) == 0) {
+    return(mapping)
+  }
+
+  mapping[] <- lapply(mapping, compact_aesthetic_quosure, cols = cols)
+  mapping
+}
+
+compact_aesthetic_quosure <- function(aesthetic, cols) {
+  if (!is_quosure(aesthetic) || !quo_is_symbol(aesthetic)) {
+    return(aesthetic)
+  }
+
+  expr <- quo_get_expr(aesthetic)
+  if (!as_string(expr) %in% cols) {
+    return(aesthetic)
+  }
+
+  new_quosure(expr, emptyenv())
+}
+
 # Figure out if an aesthetic is a position aesthetic or not
 is_position_aes <- function(vars) {
   aes_to_scale(vars) %in% c("x", "y")

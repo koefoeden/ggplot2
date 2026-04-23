@@ -785,6 +785,34 @@ attach_plot_env <- function(env) {
   withr::defer_parent(options(ggplot2_plot_env = old_env))
 }
 
+compact_plot_env <- function(env = emptyenv()) {
+  if (!is.environment(env) || identical(env, emptyenv())) {
+    return(emptyenv())
+  }
+
+  out <- new.env(parent = emptyenv())
+  current <- env
+  seen <- character()
+
+  while (is.environment(current) && !identical(current, emptyenv())) {
+    nms <- ls(current, all.names = TRUE)
+    nms <- grep("^scale_", nms, value = TRUE)
+    nms <- setdiff(nms, seen)
+
+    for (nm in nms) {
+      obj <- get0(nm, envir = current, mode = "function", inherits = FALSE)
+      if (!is.null(obj)) {
+        assign(nm, obj, envir = out)
+      }
+    }
+
+    seen <- c(seen, nms)
+    current <- parent.env(current)
+  }
+
+  out
+}
+
 as_cli <- function(..., env = caller_env()) {
   cli::cli_fmt(cli::cli_text(..., .envir = env))
 }

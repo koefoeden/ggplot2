@@ -76,18 +76,14 @@ ggproto <- function(`_class` = NULL, `_inherit` = NULL, ...) {
     list2env(members, envir = e)
   }
 
-  # Dynamically capture parent: this is necessary in order to avoid
-  # capturing the parent at package build time.
-  `_inherit` <- substitute(`_inherit`)
-  env <- parent.frame()
-  find_super <- function() {
-    eval(`_inherit`, env, NULL)
-  }
-
-  super <- find_super()
+  super <- eval(substitute(`_inherit`), parent.frame(), NULL)
   if (!is.null(super)) {
     check_object(super, is_ggproto, "a {.cls ggproto} object", arg = "_inherit")
-    e$super <- find_super
+    # Keep only the resolved parent object. Capturing `parent.frame()` here
+    # would retain the full caller environment in every runtime-created ggproto
+    # instance, including plot layers and layouts.
+    super_env <- list2env(list(super = super), parent = emptyenv())
+    e$super <- new_function(pairlist(), quote(super), super_env)
     class(e) <- c(`_class`, class(super))
   } else {
     class(e) <- c(`_class`, "ggproto", "gg")
